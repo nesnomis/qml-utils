@@ -3,7 +3,6 @@
  * Copyright (c) 2012 Romain Pokrzywka (KDAB) (romain@kdab.com)
  * Licensed under the MIT licence (http://opensource.org/licenses/mit-license.php)
  */
-
 import QtQuick 2.0
 import "jsonpath.js" as JSONPath
 
@@ -20,6 +19,7 @@ Item {
         var xhr = new XMLHttpRequest;
         xhr.open("GET", source);
         xhr.onreadystatechange = function() {
+            // @disable-check M126  // identity (===) vs equality (==)
             if (xhr.readyState == XMLHttpRequest.DONE)
                 json = xhr.responseText;
         }
@@ -36,7 +36,12 @@ Item {
             return;
 
         var objectArray = parseJSONString(json, query);
-        if (sortby !== "") objectArray = sortByKey(objectArray, sortby);
+        // As of v0.8.5 (old!), JSONPath.jsonPath() returns false instead of [] if no objects match the query.
+        // It caused "qrc:/JSONListModel.qml:55: TypeError: Property 'sort' of object false is not a function".
+        if ( !objectArray )
+            return;
+        if ( sortby !== "" )
+            objectArray = sortByKey(objectArray, sortby);
         for ( var key in objectArray ) {
             var jo = objectArray[key];
             jsonModel.append( jo );
